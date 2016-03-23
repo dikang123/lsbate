@@ -5,12 +5,14 @@ python:
 env:
   - PART=part1
   - PART=part2
+  - PART=part3
 
 install:
-  - travis_retry pip install pytest pytest-cov coveralls
+  - travis_retry pip install pytest pytest-cov coveralls codecov
 
 script:
   - cd $PART && py.test --cov .
 
 after_script:
   - coveralls
+  - codecov
