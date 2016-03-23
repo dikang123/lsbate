@@ -5,6 +5,7 @@ python:
 env:
   - PART=part1
   - PART=part2
+  - PART=part3
 
 install:
   - travis_retry pip install pytest pytest-cov coveralls
