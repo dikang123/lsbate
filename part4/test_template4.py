@@ -83,3 +83,9 @@ class TestTemplateC(TestTemplateB):
         template = self.Template('{{ escape.__globals__["__builtins__"]["open"]("/etc/passwd").read()[0] }}')  # noqa
         with pytest.raises(AttributeError):
             template.render()
+
+    def test_template4c_include_issue(self):
+        template = self.Template('{% include "item2.html" %}',
+                                 template_dir=template_dir)
+        with pytest.raises(AttributeError):
+            template.render()

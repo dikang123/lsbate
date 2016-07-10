@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # tested on Python 3.5.1
-import dis
 import io
 import os
 import re
+import tokenize
 
 
 class CodeBuilder:
@@ -245,10 +245,11 @@ class Template:
         namespace.setdefault('__builtins__', {})
         if context:
             namespace.update(context)
-        exec(str(self.code_builder), namespace)
-        func = namespace[self.func_name]
+        code = str(self.code_builder)
         if self.safe_attribute:
-            check_unsafe_attributes(func)
+            check_unsafe_attributes(code)
+        exec(code, namespace)
+        func = namespace[self.func_name]
         result = func()
         return result
 
@@ -284,14 +285,14 @@ def noescape(text):
     return NoEscape(text)
 
 
-def check_unsafe_attributes(code):
-    writer = io.StringIO()
-    dis.dis(code, file=writer)
-    output = writer.getvalue()
-
-    match = re.search(r'\d+\s+LOAD_ATTR\s+\d+\s+\((?P<attr>_[^\)]+)\)',
-                      output)
-    if match is not None:
-        attr = match.group('attr')
-        msg = "access to attribute '{0}' is unsafe.".format(attr)
-        raise AttributeError(msg)
+def check_unsafe_attributes(string):
+    g = tokenize.tokenize(io.BytesIO(string.encode('utf-8')).readline)
+    pre_op = ''
+    for toktype, tokval, _, _, _ in g:
+        if toktype == tokenize.NAME and pre_op == '.' and \
+                tokval.startswith('_'):
+            attr = tokval
+            msg = "access to attribute '{0}' is unsafe.".format(attr)
+            raise AttributeError(msg)
+        elif toktype == tokenize.OP:
+            pre_op = tokval
